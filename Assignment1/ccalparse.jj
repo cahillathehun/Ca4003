@@ -1,0 +1,42 @@
+/***********************
+**SECTION 1 -- OPTIONS**
+***********************/
+options {
+  IGNORE_CASE = true;
+  JAVA_UNICODE_ESCAPE = true;
+}
+
+/***********************
+*SECTION 2 -- USR CODE**
+***********************/
+
+PARSER_BEGIN(ccalparser1)
+
+public class Assignment1Parser {
+
+  public static void main(String[] args) {
+
+    Assignment1Parser parser;
+
+    //*******init parser*******//
+
+    if (args.length == 0){
+      System.out.println("No file specified, reading from std in...");
+      parser = new Assignment1Parser(System.in);
+    }
+    else if (argslength == 1) {
+      try {
+        parser = new Assignment1Parser(new java.io.FileInputStream(args[0]));
+      }
+      catch (java.io.FileNotFoundException err) {
+        System.err.println("File " + args[0] + " not found!");
+        return;
+      }
+    }
+    else {
+      System.out.println("Please try again using CCAL parser like:");
+      System.out.println("  java ccalparse < inputfile.ccl")
+      System.out.println("  java ccalparse < inputfile.ccl")
+    }
+  }
+}
