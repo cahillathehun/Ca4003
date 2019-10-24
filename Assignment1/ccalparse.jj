@@ -4,29 +4,30 @@
 options {
   IGNORE_CASE = true;
   JAVA_UNICODE_ESCAPE = true;
+  DEBUG_PARSER = true;
 }
 
 /***********************
 *SECTION 2 -- USR CODE**
 ***********************/
 
-PARSER_BEGIN(ccalparser1)
+PARSER_BEGIN(ccalparse)
 
-public class Assignment1Parser {
+public class ccalparse {
 
   public static void main(String[] args) {
 
-    Assignment1Parser parse;
+    ccalparse parse;
 
     /******* init parser *******/
 
     if (args.length == 0){
       System.out.println("No file specified, reading from std in...");
-      parse = new Assignment1Parser(System.in);
+      parse = new ccalparse(System.in);
     }
     else if (args.length == 1) {
       try {
-        parse = new Assignment1Parser(new java.io.FileInputStream(args[0]));
+        parse = new ccalparse(new java.io.FileInputStream(args[0]));
       }
       catch (java.io.FileNotFoundException err) {
         System.err.println("File " + args[0] + " not found!");
@@ -50,14 +51,14 @@ public class Assignment1Parser {
       System.out.println("Parsing file...");
       parse.program();
       System.out.println("Successfully parsed!");
-    } catch (FileNotParsedException err) {
+    } catch (ParseException err) {
       System.out.println("Error during parsing!");
       System.out.println("SYSTEM ERROR MSG :" + err.getMessage());
     }
   }
 }
 
-PARSER_END(ccalparser1)
+PARSER_END(ccalparse)
 
 
 /*********************************
@@ -90,7 +91,7 @@ SKIP :
 <IN_COMMENT> SKIP :
 {
   "/*" { commentNestLvl++;}
-  | "/*" {commentNestLvl--; if commentNestLvl==0 SwitchTo(DEFAULT);}
+  | "*/" {commentNestLvl--; if (commentNestLvl==0) SwitchTo(DEFAULT);}
 }
 
 /******* RESERVED WORDS *******/
@@ -99,8 +100,8 @@ TOKEN :
   < VAR : "var" >
   | < CONST : "const" >
   | < RETURN : "return" >
-  | < INTEGER : "integer" >
-  | < BOOLEAN : "boolean" >
+  | < INT : "integer" >
+  | < BOOL : "boolean" >
   | < VOID : "void" >
   | < MAIN : "main" >
   | < IF : "if" >
@@ -143,5 +144,65 @@ TOKEN :
   | < LESS_THAN_EQUAL : "<=" >
   | < GREATER_THAN : ">" >
   | < GREATER_THAN_EQUAL : ">=" >
+}
 
+/******* INTS *******/
+TOKEN :
+{
+  < #DIGIT : ["0"-"9"] >
+  | < #NUM : ( "-" ["1"-"9"]) >
+}
+
+/******* CHARS & IDs ******/
+TOKEN :
+{
+  <#CHAR: ["a"-"z"]>
+  | <ID: <CHAR> ( <CHAR> | <DIGIT> | " ")* >
+}
+
+
+/************************************
+**SECTION 4 -- GRAMMAR & PROD RULES**
+************************************/
+
+void program () : {}
+{
+  (decl())* (function())* main()
+}
+
+void main () : {}
+{
+  <MAIN>
+  <CURLY_O>
+  <CURLY_C>
+}
+
+void decl () : {}
+{
+  (var_decl() | const_decl()) <SEMIC>
+}
+void var_decl () : {}
+{
+  <VAR> <ID> <COLON> type()
+}
+void const_decl () : {}
+{
+  <CONST> <ID> <COLON> type() <ASSIGN> expr()
+}
+
+void type() : {}
+{
+  (<INT> | <VOID> | <BOOL>)
+}
+
+void expr() : {}
+{
+  /* leaving empty for now */
+  <INT>
+}
+
+void function() : {}
+{
+  /* leaving empty for now */
+  <INT>
 }
