@@ -83,8 +83,9 @@ SKIP :
 /******* skip single line comments or change to skipping multi-line comments *******/
 SKIP :
 {
-  < "//" ([" "-"~"])* "\n" >
+  < "//" ([" "-"~"])* ("\r"|"\n"|"\r\n") >
   | "/*" { commentNestLvl++; } : IN_COMMENT
+  | <~[]>
 }
 
 /******* multi-line comment skipping *******/

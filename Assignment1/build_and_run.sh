@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 javacc ccalparse.jj
 javac ccalparse.java
 
