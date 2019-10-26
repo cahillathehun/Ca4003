@@ -1,0 +1,5 @@
+main
+{
+  // a comment
+  /* nested /* comments /*yo */ whats */ up */
+}
