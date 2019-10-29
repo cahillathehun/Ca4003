@@ -101,7 +101,7 @@ TOKEN :
   < VAR : "var" >
   | < CONST : "const" >
   | < RETURN : "return" >
-  | < INT : "integer" >
+  | < INT : "int" >
   | < BOOL : "boolean" >
   | < VOID : "void" >
   | < MAIN : "main" >
@@ -158,7 +158,7 @@ TOKEN :
 TOKEN :
 {
   <#CHAR: ["a"-"z"]>
-  | <ID: <CHAR> ( <CHAR> | <DIGIT> | " ")* >
+  | <ID: <CHAR> ( <CHAR> | <DIGIT> | "_")* >
 }
 
 
@@ -173,8 +173,7 @@ void program () : {}
 
 void main () : {}
 {
-  <MAIN>
-  <CURLY_O> (decl())* (statement())* <CURLY_C>
+  <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
 }
 
 
@@ -193,7 +192,7 @@ void const_decl () : {}
 
 void type () : {}
 {
-  (<INT> | <VOID> | <BOOL>)
+  (<NUM> | <VOID> | <BOOL>)
 }
 
 void expr () : {}
@@ -236,7 +235,7 @@ void function () : {}
   <CURLY_O>
   (decl())*
   (statement())*
-  <RETURN> <ROUNDED_O> (expr() | "") <ROUNDED_C> <SEMIC>
+  <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC>
   <CURLY_C>
 }
 
@@ -267,6 +266,11 @@ void condition () : {}
 
 void arg () : {}
 {
-  <ID>
-  | <ID> <COMMA> arg()
+  <ID> arg_prime()
+}
+
+
+void arg_prime () : {}
+{
+  [<COMMA> arg()]
 }

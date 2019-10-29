@@ -1,9 +1,9 @@
-void func()
+void function ()
 {
-  return();
+  return ();
 }
 
 main
 {
-  func();
+  func ();
 }
