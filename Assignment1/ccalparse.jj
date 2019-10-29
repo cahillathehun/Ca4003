@@ -151,7 +151,7 @@ TOKEN :
 TOKEN :
 {
   < #DIGIT : ["0"-"9"] >
-  | < #NUM : ( "-" ["1"-"9"]) >
+  | < NUM : ( "-" ["1"-"9"]) >
 }
 
 /******* CHARS & IDs ******/
@@ -178,6 +178,11 @@ void main () : {}
   <CURLY_C>
 }
 
+void decl_list () : {}
+{
+  (decl())*
+}
+
 void decl () : {}
 {
   (var_decl() | const_decl()) <SEMIC>
@@ -191,19 +196,81 @@ void const_decl () : {}
   <CONST> <ID> <COLON> type() <ASSIGN> expr()
 }
 
-void type() : {}
+void type () : {}
 {
   (<INT> | <VOID> | <BOOL>)
 }
 
-void expr() : {}
+void expr () : {}
 {
-  /* leaving empty for now */
-  <INT>
+  frag() bin_op() frag()
+  | (<ROUNDED_O> expr() <ROUNDED_C>)
+  | <ID> <ROUNDED_O> arg_list() <ROUNDED_C>
+  | frag()
 }
 
-void function() : {}
+void frag () : {}
 {
-  /* leaving empty for now */
-  <INT>
+  <ID>
+  | <MINUS> <ID>
+  | <NUM>
+  | <TRUE>
+  | <FALSE>
+  | expr()
+}
+
+void bin_op () : {}
+{
+  <PLUS>
+  | <MINUS>
+}
+
+void comp_op () : {}
+{
+  <EQUAL>
+  | <NOT_EQUAL>
+  | <GREATER_THAN>
+  | <GREATER_THAN_EQUAL>
+  | <LESS_THAN>
+  | <LESS_THAN_EQUAL>
+}
+
+void function () : {}
+{
+  type() <ID> <ROUNDED_O> (param())* <ROUNDED_C>
+  <CURLY_O>
+  (decl())*
+  (statement())*
+  <RETURN> <ROUNDED_O> (expr() | "") <SEMIC> <ROUNDED_C>
+}
+
+void param () : {}
+{
+  <ID> <COLON> type()
+  |<ID> type() <COMMA> param()
+}
+
+void statement () : {}
+{
+  <ID> <ASSIGN> expr() <SEMIC>
+  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
+  | <CURLY_O> (statement())* <CURLY_C>
+  | <IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C>
+  | <WHILE> condition() <CURLY_O> (statement())* <CURLY_C>
+  | <SKIPPY> <SEMIC>
+
+}
+
+void condition () : {}
+{
+  <NEGATE> condition()
+  | <ROUNDED_O> condition() <ROUNDED_C>
+  | expr() comp_op() expr()
+  | condition() (<OR> | <AND>) condition()
+}
+
+void arg () : {}
+{
+  <ID>
+  | <ID> <COMMA> arg()
 }
