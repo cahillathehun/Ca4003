@@ -108,7 +108,7 @@ TOKEN :
   | < IF : "if" >
   | < ELSE : "else" >
   | < TRUE : "true" >
-  | < FASLE : "false" >
+  | < FALSE : "false" >
   | < WHILE : "while" >
   | < SKIPPY : "skip" >
 }
@@ -168,20 +168,15 @@ TOKEN :
 
 void program () : {}
 {
-  (decl())* (function())* main()
+  decl() function() main()
 }
 
 void main () : {}
 {
   <MAIN>
-  <CURLY_O>
-  <CURLY_C>
+  <CURLY_O> (decl())* (statement())* <CURLY_C>
 }
 
-void decl_list () : {}
-{
-  (decl())*
-}
 
 void decl () : {}
 {
@@ -205,7 +200,7 @@ void expr () : {}
 {
   frag() bin_op() frag()
   | (<ROUNDED_O> expr() <ROUNDED_C>)
-  | <ID> <ROUNDED_O> arg_list() <ROUNDED_C>
+  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C>
   | frag()
 }
 
@@ -241,7 +236,8 @@ void function () : {}
   <CURLY_O>
   (decl())*
   (statement())*
-  <RETURN> <ROUNDED_O> (expr() | "") <SEMIC> <ROUNDED_C>
+  <RETURN> <ROUNDED_O> (expr() | "") <ROUNDED_C> <SEMIC>
+  <CURLY_C>
 }
 
 void param () : {}
