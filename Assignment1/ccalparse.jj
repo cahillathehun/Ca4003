@@ -101,7 +101,7 @@ TOKEN :
   < VAR : "var" >
   | < CONST : "const" >
   | < RETURN : "return" >
-  | < INT : "int" >
+  | < INT : "integer" >
   | < BOOL : "boolean" >
   | < VOID : "void" >
   | < MAIN : "main" >
