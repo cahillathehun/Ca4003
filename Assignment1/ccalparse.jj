@@ -168,7 +168,7 @@ TOKEN :
 
 void program () : {}
 {
-  decl() function() main()
+  (decl())* (function())* (main())*
 }
 
 void main () : {}
