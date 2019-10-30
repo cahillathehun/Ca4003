@@ -197,20 +197,18 @@ void type () : {}
 
 void expr () : {}
 {
-  frag() bin_op() frag()
-  | (<ROUNDED_O> expr() <ROUNDED_C>)
-  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C>
-  | frag()
+  frag() (bin_op() frag())*
 }
+
 
 void frag () : {}
 {
-  <ID>
-  | <MINUS> <ID>
+  (<MINUS>)? <ID>
   | <NUM>
   | <TRUE>
   | <FALSE>
-  | expr()
+  | <ROUNDED_O> expr() <ROUNDED_C>
+  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C>
 }
 
 void bin_op () : {}
@@ -258,10 +256,14 @@ void statement () : {}
 
 void condition () : {}
 {
+  condition_prime() ((<OR> | <AND>) condition_prime())*
+}
+
+void condition_prime () : {}
+{
   <NEGATE> condition()
   | <ROUNDED_O> condition() <ROUNDED_C>
   | expr() comp_op() expr()
-  | condition() (<OR> | <AND>) condition()
 }
 
 void arg () : {}
