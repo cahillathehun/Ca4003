@@ -37,7 +37,7 @@ integer multiply (x:integer , y:integer)
   while (y > 0)
   {
     result = result + x;
-    y = y -1;
+    y = y - 1;
   }
 
   if minus_sign == true
@@ -57,7 +57,7 @@ main
 {
   var arg_1:integer;
   var arg_2:integer;
-  var result:;
+  var result:integer;
   const five:integer = 5;
 
   arg_1 = -6;

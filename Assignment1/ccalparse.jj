@@ -239,9 +239,9 @@ void function () : {}
 
 void param () : {}
 {
-  LOOKAHEAD(<ID> <COLON>)
-  <ID> <COLON> type()
-  |<ID> type() <COMMA> param()
+  LOOKAHEAD(<ID> <COLON> type() <COMMA>)
+  <ID> <COLON> type() <COMMA> param()
+  | <ID> <COLON> type()
 }
 
 void statement () : {}
