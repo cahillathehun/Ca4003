@@ -257,6 +257,7 @@ void statement () : {}
 
 void condition () : {}
 {
+  //TODO Fix the choice conflict below.
   condition_prime() ((<OR> | <AND>) condition_prime())*
 }
 
