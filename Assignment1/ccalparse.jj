@@ -203,12 +203,11 @@ void expr () : {}
 
 void frag () : {}
 {
-  (<MINUS>)? <ID>
+  (<MINUS>)? <ID> (<ROUNDED_O> (arg())* <ROUNDED_C>)?
   | <NUM>
   | <TRUE>
   | <FALSE>
   | <ROUNDED_O> expr() <ROUNDED_C>
-  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C>
 }
 
 void bin_op () : {}
@@ -239,12 +238,14 @@ void function () : {}
 
 void param () : {}
 {
+  LOOKAHEAD(<ID> <COLON>)
   <ID> <COLON> type()
   |<ID> type() <COMMA> param()
 }
 
 void statement () : {}
 {
+  LOOKAHEAD(<ID> <ASSIGN>)
   <ID> <ASSIGN> expr() <SEMIC>
   | <ID> <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | <CURLY_O> (statement())* <CURLY_C>
@@ -261,8 +262,9 @@ void condition () : {}
 
 void condition_prime () : {}
 {
-  <NEGATE> condition()
-  | <ROUNDED_O> condition() <ROUNDED_C>
+  LOOKAHEAD(<ROUNDED_O> condition())
+  <ROUNDED_O> condition() <ROUNDED_C>
+  | <NEGATE> condition()
   | expr() comp_op() expr()
 }
 
