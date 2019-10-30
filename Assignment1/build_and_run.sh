@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-javacc ccalparse.jj
-javac ccalparse.java
-
 java ccalparse tests/main1.ccl
 echo MAIN1 FIN
 java ccalparse tests/main2.ccl
