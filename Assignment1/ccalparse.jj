@@ -2,9 +2,10 @@
 **SECTION 1 -- OPTIONS**
 ***********************/
 options {
+  /******* INGORE_CASE is the only option needed *******/
   IGNORE_CASE = true;
-  JAVA_UNICODE_ESCAPE = true;
-  DEBUG_PARSER = true;
+  // JAVA_UNICODE_ESCAPE = true;
+  //DEBUG_PARSER = true;
 }
 
 /***********************
@@ -168,11 +169,15 @@ TOKEN :
 
 void program () : {}
 {
-  (decl())* (function())* (main())*
+  /******* takes in any amount of  declarations, function definitions and a main *******/
+  /******* uses kleene star instead of decl_list() & function_list() *******/
+  (decl())* (function())* main()
 }
 
 void main () : {}
 {
+  /******* takes in a main, braces, declarations and statements *******/
+  /******* uses kleene star instead of statement_block() *******/
   <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
 }
 
@@ -197,12 +202,14 @@ void type () : {}
 
 void expr () : {}
 {
+  /******* uses kleene star instead of farg_list() *******/
   frag() (bin_op() frag())*
 }
 
 
 void frag () : {}
 {
+  /******* uses kleene star instead of arg_lsit() *******/
   (<MINUS>)? <ID> (<ROUNDED_O> (arg())* <ROUNDED_C>)?
   | <NUM>
   | <DIGIT>
@@ -229,6 +236,7 @@ void comp_op () : {}
 
 void function () : {}
 {
+  /******* uses kleene star instead of param_lsit() *******/
   type() <ID> <ROUNDED_O> (param())* <ROUNDED_C>
   <CURLY_O>
   (decl())*
@@ -278,5 +286,6 @@ void arg () : {}
 
 void arg_prime () : {}
 {
+  /******* fixes conflict/L recur *******/
   [<COMMA> arg()]
 }
