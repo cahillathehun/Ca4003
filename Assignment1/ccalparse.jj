@@ -1,11 +1,10 @@
 /***********************
 **SECTION 1 -- OPTIONS**
 ***********************/
-options {
+options
+{
   /******* INGORE_CASE is the only option needed *******/
-  IGNORE_CASE = true;
-  // JAVA_UNICODE_ESCAPE = true;
-  //DEBUG_PARSER = true;
+  IGNORE_CASE = true
 }
 
 /***********************
@@ -28,19 +27,23 @@ public class ccalparse {
     }
     else if (args.length == 1) {
       try {
+        //file found, start parsing
+        System.out.println("Parsing " + args[0] + "!");
         parse = new ccalparse(new java.io.FileInputStream(args[0]));
       }
       catch (java.io.FileNotFoundException err) {
+        //file not found, parsing not started
         System.err.println("File " + args[0] + " not found!");
         System.err.println("SYSTEM ERROR MSG: " + err);
         return;
       }
     }
     else {
+      //parser wasn't used properly
       System.out.println("Please try again using CCAL parser like:");
-      System.out.println("  java ccalparse < inputfile.ccl");
+      System.out.println(" $ java ccalparse < inputfile.ccl");
       System.out.println("or like");
-      System.out.println("  java ccalparse  inputfile.ccl");
+      System.out.println(" $ java ccalparse inputfile.ccl");
       return;
     }
 
@@ -247,6 +250,7 @@ void function () : {}
 
 void param () : {}
 {
+  /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(<ID> <COLON> type() <COMMA>)
   <ID> <COLON> type() <COMMA> param()
   | <ID> <COLON> type()
@@ -254,6 +258,7 @@ void param () : {}
 
 void statement () : {}
 {
+  /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(<ID> <ASSIGN>)
   <ID> <ASSIGN> expr() <SEMIC>
   | <ID> <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
