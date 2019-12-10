@@ -4,7 +4,7 @@
 options
 {
   /******* INGORE_CASE is the only option needed *******/
-  IGNORE_CASE = true
+  IGNORE_CASE = true;
 }
 
 /***********************
@@ -13,23 +13,36 @@ options
 
 PARSER_BEGIN(ccalparse)
 
+import java.io.*;
+import java.util.*;
+
 public class ccalparse {
 
   public static void main(String[] args) {
 
-    ccalparse parse;
 
     /******* init parser *******/
 
     if (args.length == 0){
       System.out.println("No file specified, reading from std in...");
-      parse = new ccalparse(System.in);
+
+      //ccalparse parse = new ccalparse(System.in);
+
     }
     else if (args.length == 1) {
       try {
         //file found, start parsing
-        System.out.println("Parsing " + args[0] + "!");
-        parse = new ccalparse(new java.io.FileInputStream(args[0]));
+        //System.out.println("Parsing " + args[0] + "!");
+
+        ccalparse parse = new ccalparse(new java.io.FileInputStream(args[0]));
+        SimpleNode root = parse.program();
+
+        System.out.println("\\_________AST_________//");
+
+        root.dump(" ");
+
+        System.out.println();
+        System.out.println("SYMBOL TABLE: ");
       }
       catch (java.io.FileNotFoundException err) {
         //file not found, parsing not started
@@ -170,47 +183,46 @@ TOKEN :
 **SECTION 4 -- GRAMMAR & PROD RULES**
 ************************************/
 
-void program () : {}
+SimpleNode program() : {}
 {
   /******* takes in any amount of  declarations, function definitions and a main *******/
   /******* uses kleene star instead of decl_list() & function_list() *******/
-  (decl())* (function())* main()
+  (decl())* (function())* main() <EOF> {return jjtThis;}
 }
 
-void main () : {}
+void main() : {}
 {
   /******* takes in a main, braces, declarations and statements *******/
   /******* uses kleene star instead of statement_block() *******/
   <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
 }
 
-
-void decl () : {}
+void decl() : {}
 {
   (var_decl() | const_decl()) <SEMIC>
 }
-void var_decl () : {}
+void var_decl() : {}
 {
   <VAR> <ID> <COLON> type()
 }
-void const_decl () : {}
+void const_decl() : {}
 {
   <CONST> <ID> <COLON> type() <ASSIGN> expr()
 }
 
-void type () : {}
+void type() : {}
 {
   (<NUM> | <VOID> | <BOOL> | <INT>)
 }
 
-void expr () : {}
+void expr() : {}
 {
-  /******* uses kleene star instead of farg_list() *******/
+  /******* uses kleene star instead of frag_list() *******/
   frag() (bin_op() frag())*
 }
 
 
-void frag () : {}
+void frag() : {}
 {
   /******* uses kleene star instead of arg_lsit() *******/
   (<MINUS>)? <ID> (<ROUNDED_O> (arg())* <ROUNDED_C>)?
@@ -221,13 +233,13 @@ void frag () : {}
   | <ROUNDED_O> expr() <ROUNDED_C>
 }
 
-void bin_op () : {}
+void bin_op() : {}
 {
   <PLUS>
   | <MINUS>
 }
 
-void comp_op () : {}
+void comp_op() : {}
 {
   <EQUAL>
   | <NOT_EQUAL>
@@ -237,7 +249,7 @@ void comp_op () : {}
   | <LESS_THAN_EQUAL>
 }
 
-void function () : {}
+void function() : {}
 {
   /******* uses kleene star instead of param_lsit() *******/
   type() <ID> <ROUNDED_O> (param())* <ROUNDED_C>
@@ -248,7 +260,7 @@ void function () : {}
   <CURLY_C>
 }
 
-void param () : {}
+void param() : {}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(<ID> <COLON> type() <COMMA>)
@@ -256,7 +268,7 @@ void param () : {}
   | <ID> <COLON> type()
 }
 
-void statement () : {}
+void statement() : {}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(<ID> <ASSIGN>)
@@ -269,13 +281,12 @@ void statement () : {}
 
 }
 
-void condition () : {}
+void condition() : {}
 {
-  //TODO Fix the choice conflict below.
   condition_prime() ((<OR> | <AND>) condition_prime())*
 }
 
-void condition_prime () : {}
+void condition_prime() : {}
 {
   LOOKAHEAD(<ROUNDED_O> condition())
   <ROUNDED_O> condition() <ROUNDED_C>
@@ -283,13 +294,13 @@ void condition_prime () : {}
   | expr() comp_op() expr()
 }
 
-void arg () : {}
+void arg() : {}
 {
   <ID> arg_prime()
 }
 
 
-void arg_prime () : {}
+void arg_prime() : {}
 {
   /******* fixes conflict/L recur *******/
   [<COMMA> arg()]
