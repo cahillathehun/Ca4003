@@ -172,8 +172,6 @@ TOKEN :
 
 void program () : {}
 {
-  /******* takes in any amount of  declarations, function definitions and a main *******/
-  /******* uses kleene star instead of decl_list() & function_list() *******/
   (decl())* (function())* main()
 }
 
@@ -191,13 +189,16 @@ void decl () : {}
 }
 void var_decl () : {}
 {
-  <VAR> <ID> <COLON> type()
+  <VAR> <ID> <COLON> decl_type()
 }
 void const_decl () : {}
 {
-  <CONST> <ID> <COLON> type() <ASSIGN> expr()
+  <CONST> <ID> <COLON> decl_type() <ASSIGN> expr()
 }
-
+void decl_type () : {}
+{
+  (<NUM> | <BOOL> | <INT>)
+}
 void type () : {}
 {
   (<NUM> | <VOID> | <BOOL> | <INT>)
@@ -251,9 +252,9 @@ void function () : {}
 void param () : {}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
-  LOOKAHEAD(<ID> <COLON> type() <COMMA>)
-  <ID> <COLON> type() <COMMA> param()
-  | <ID> <COLON> type()
+  LOOKAHEAD(<ID> <COLON> decl_type() <COMMA>)
+  <ID> <COLON> decl_type() <COMMA> param()
+  | <ID> <COLON> decl_type()
 }
 
 void statement () : {}
