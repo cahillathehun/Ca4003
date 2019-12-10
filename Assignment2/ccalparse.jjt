@@ -1,0 +1,296 @@
+/***********************
+**SECTION 1 -- OPTIONS**
+***********************/
+options
+{
+  /******* INGORE_CASE is the only option needed *******/
+  IGNORE_CASE = true
+}
+
+/***********************
+*SECTION 2 -- USR CODE**
+***********************/
+
+PARSER_BEGIN(ccalparse)
+
+public class ccalparse {
+
+  public static void main(String[] args) {
+
+    ccalparse parse;
+
+    /******* init parser *******/
+
+    if (args.length == 0){
+      System.out.println("No file specified, reading from std in...");
+      parse = new ccalparse(System.in);
+    }
+    else if (args.length == 1) {
+      try {
+        //file found, start parsing
+        System.out.println("Parsing " + args[0] + "!");
+        parse = new ccalparse(new java.io.FileInputStream(args[0]));
+      }
+      catch (java.io.FileNotFoundException err) {
+        //file not found, parsing not started
+        System.err.println("File " + args[0] + " not found!");
+        System.err.println("SYSTEM ERROR MSG: " + err);
+        return;
+      }
+    }
+    else {
+      //parser wasn't used properly
+      System.out.println("Please try again using CCAL parser like:");
+      System.out.println(" $ java ccalparse < inputfile.ccl");
+      System.out.println("or like");
+      System.out.println(" $ java ccalparse inputfile.ccl");
+      return;
+    }
+
+    /******* init is finished *******/
+
+
+    /******* try parsing the file *******/
+    try {
+      System.out.println("Parsing file...");
+      parse.program();
+      System.out.println("Successfully parsed!");
+    } catch (ParseException err) {
+      System.out.println("Error during parsing!");
+      System.out.println("SYSTEM ERROR MSG :" + err.getMessage());
+    }
+  }
+}
+
+PARSER_END(ccalparse)
+
+
+/*********************************
+**SECTION 3 -- TOKEN DEFINITIONS**
+*********************************/
+
+TOKEN_MGR_DECLS :
+{
+  static int commentNestLvl = 0;
+}
+
+/******* skip whitespace, tabs & newlines *******/
+SKIP :
+{
+  " "
+  | "\t"
+  | "\n"
+  | "\r"
+  | "\f"
+}
+
+/******* skip single line comments or change to skipping multi-line comments *******/
+SKIP :
+{
+  < "//" ([" "-"~"])* ("\r"|"\n"|"\r\n") >
+  | "/*" { commentNestLvl++; } : IN_COMMENT
+}
+
+/******* multi-line comment skipping *******/
+<IN_COMMENT> SKIP :
+{
+  "/*" { commentNestLvl++;}
+  | "*/" {commentNestLvl--; if (commentNestLvl==0) SwitchTo(DEFAULT);}
+  | <~[]>
+}
+
+/******* RESERVED WORDS *******/
+TOKEN :
+{
+  < VAR : "var" >
+  | < CONST : "const" >
+  | < RETURN : "return" >
+  | < INT : "integer" >
+  | < BOOL : "boolean" >
+  | < VOID : "void" >
+  | < MAIN : "main" >
+  | < IF : "if" >
+  | < ELSE : "else" >
+  | < TRUE : "true" >
+  | < FALSE : "false" >
+  | < WHILE : "while" >
+  | < SKIPPY : "skip" >
+}
+
+/******** PUNCTUATION *******/
+TOKEN :
+{
+  < COMMA : "," >
+  | < SEMIC : ";" >
+  | < COLON : ":" >
+}
+
+/******** BRACKETS *******/
+TOKEN :
+{
+  < CURLY_O : "{" >
+  | < CURLY_C : "}" >
+  | < ROUNDED_O : "(" >
+  | < ROUNDED_C : ")" >
+}
+
+/******* LOGICAL & MATHEMATICAL OPER8TORS *******/
+TOKEN :
+{
+  < ASSIGN : "=" >
+  | < PLUS : "+" >
+  | < MINUS : "-" >
+  | < NEGATE : "~" >
+  | < OR : "||" >
+  | < AND : "&&" >
+  | < EQUAL : "==" >
+  | < NOT_EQUAL : "!=" >
+  | < LESS_THAN : "<" >
+  | < LESS_THAN_EQUAL : "<=" >
+  | < GREATER_THAN : ">" >
+  | < GREATER_THAN_EQUAL : ">=" >
+}
+
+/******* INTS *******/
+TOKEN :
+{
+  < DIGIT : ["0"-"9"] >
+  | < NUM : ( "-" ["1"-"9"]) >
+}
+
+/******* CHARS & IDs ******/
+TOKEN :
+{
+  <#CHAR: ["a"-"z"]>
+  | <ID: <CHAR> ( <CHAR> | <DIGIT> | "_")* >
+}
+
+
+/************************************
+**SECTION 4 -- GRAMMAR & PROD RULES**
+************************************/
+
+void program () : {}
+{
+  /******* takes in any amount of  declarations, function definitions and a main *******/
+  /******* uses kleene star instead of decl_list() & function_list() *******/
+  (decl())* (function())* main()
+}
+
+void main () : {}
+{
+  /******* takes in a main, braces, declarations and statements *******/
+  /******* uses kleene star instead of statement_block() *******/
+  <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
+}
+
+
+void decl () : {}
+{
+  (var_decl() | const_decl()) <SEMIC>
+}
+void var_decl () : {}
+{
+  <VAR> <ID> <COLON> type()
+}
+void const_decl () : {}
+{
+  <CONST> <ID> <COLON> type() <ASSIGN> expr()
+}
+
+void type () : {}
+{
+  (<NUM> | <VOID> | <BOOL> | <INT>)
+}
+
+void expr () : {}
+{
+  /******* uses kleene star instead of farg_list() *******/
+  frag() (bin_op() frag())*
+}
+
+
+void frag () : {}
+{
+  /******* uses kleene star instead of arg_lsit() *******/
+  (<MINUS>)? <ID> (<ROUNDED_O> (arg())* <ROUNDED_C>)?
+  | <NUM>
+  | <DIGIT>
+  | <TRUE>
+  | <FALSE>
+  | <ROUNDED_O> expr() <ROUNDED_C>
+}
+
+void bin_op () : {}
+{
+  <PLUS>
+  | <MINUS>
+}
+
+void comp_op () : {}
+{
+  <EQUAL>
+  | <NOT_EQUAL>
+  | <GREATER_THAN>
+  | <GREATER_THAN_EQUAL>
+  | <LESS_THAN>
+  | <LESS_THAN_EQUAL>
+}
+
+void function () : {}
+{
+  /******* uses kleene star instead of param_lsit() *******/
+  type() <ID> <ROUNDED_O> (param())* <ROUNDED_C>
+  <CURLY_O>
+  (decl())*
+  (statement())*
+  <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC>
+  <CURLY_C>
+}
+
+void param () : {}
+{
+  /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
+  LOOKAHEAD(<ID> <COLON> type() <COMMA>)
+  <ID> <COLON> type() <COMMA> param()
+  | <ID> <COLON> type()
+}
+
+void statement () : {}
+{
+  /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
+  LOOKAHEAD(<ID> <ASSIGN>)
+  <ID> <ASSIGN> expr() <SEMIC>
+  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
+  | <CURLY_O> (statement())* <CURLY_C>
+  | <IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C>
+  | <WHILE> condition() <CURLY_O> (statement())* <CURLY_C>
+  | <SKIPPY> <SEMIC>
+
+}
+
+void condition () : {}
+{
+  //TODO Fix the choice conflict below.
+  condition_prime() ((<OR> | <AND>) condition_prime())*
+}
+
+void condition_prime () : {}
+{
+  LOOKAHEAD(<ROUNDED_O> condition())
+  <ROUNDED_O> condition() <ROUNDED_C>
+  | <NEGATE> condition()
+  | expr() comp_op() expr()
+}
+
+void arg () : {}
+{
+  <ID> arg_prime()
+}
+
+
+void arg_prime () : {}
+{
+  /******* fixes conflict/L recur *******/
+  [<COMMA> arg()]
+}
