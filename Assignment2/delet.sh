@@ -1,5 +1,1 @@
-#!/bin/bash
-shopt -s extglob
-rm *.java
-rm *.jj
-rm *.class
+find . -type f -not -name 'ccalparse.jjt' -not -name 'STC.java' -not -name 'build.sh' -not -name 'delet.sh' -not -name 'functions.ccl' -not -name 'main1.ccl' -not -name 'main2.ccl' -not -name 'main3.ccl' -not -name 'scopes.ccl' -not -name 'simple_func.ccl' -not -name 'comments.ccl' -delete

@@ -10,5 +10,19 @@ javac *.java
 echo --- javac run ---
 sleep 2
 
-java ccalparse tests/main1.ccl
+echo
+echo main1.ccl
+java ccalparse main1.ccl
+echo main2.ccl
+java ccalparse main2.ccl
+echo main3.ccl
+java ccalparse main3.ccl
+echo comments.ccl
+java ccalparse comments.ccl
+echo scopes
+java ccalparse scopes.ccl
+echo simple_func
+java ccalparse simple_func.ccl
+echo functions
+java ccalparse functions.ccl
 echo --- java run ---

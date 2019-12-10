@@ -6,6 +6,7 @@ options
   /******* INGORE_CASE is the only option needed *******/
   IGNORE_CASE = true;
   JAVA_UNICODE_ESCAPE = true;
+  NODE_DEFAULT_VOID = true;
   MULTI=true;
   VISITOR = true;
 }
@@ -21,7 +22,11 @@ import java.util.*;
 
 public class ccalparse {
 
-  public static void main(String[] args)throws ParseException, FileNotFoundException{
+  public static STC ST = new STC();
+
+  public static void main(String[] args)throws ParseException, FileNotFoundException {
+    String tmp;
+    STC tmp2;
 
     ccalparse parse;
 
@@ -29,6 +34,7 @@ public class ccalparse {
     System.out.println("Parsing file...\n");
 
     parse = new ccalparse(new java.io.FileInputStream(args[0]));
+    System.out.println("Successfully parsed!");
 
     SimpleNode root = parse.program();
 
@@ -37,15 +43,10 @@ public class ccalparse {
     System.out.println("");
     System.out.println("\\_______AST END_______/\n");
 
-    //System.out.println("SYMBOL TABLE: ");
+    System.out.println("\\_______SYMBOL TABLE_______/\n");
+    ST.printTable();
+    System.out.println("\\_____SYMBOL TABLE END_____/\n");
 
-
-
-
-
-    System.out.println("Successfully parsed!");
-
-    //System.out.println("SYSTEM ERROR MSG :" + err.getMessage());
 
   }
 }
@@ -158,14 +159,14 @@ TOKEN :
 **SECTION 4 -- GRAMMAR & PROD RULES**
 ************************************/
 
-SimpleNode program() : {}
+SimpleNode program() #Program: {}
 {
   /******* takes in any amount of  declarations, function definitions and a main *******/
   /******* uses kleene star instead of decl_list() & function_list() *******/
   (decl())* (function())* main() <EOF> {return jjtThis;}
 }
 
-void main() : {}
+void main() #Main: {}
 {
   /******* takes in a main, braces, declarations and statements *******/
   /******* uses kleene star instead of statement_block() *******/
@@ -176,18 +177,18 @@ void decl() : {}
 {
   (var_decl() | const_decl()) <SEMIC>
 }
-void var_decl() : {}
+void var_decl() #VarDecl: {}
 {
-  <VAR> <ID> <COLON> type()
+  <VAR> idt() <COLON> type()
 }
-void const_decl() : {}
+void const_decl() #ConstDecl: {}
 {
-  <CONST> <ID> <COLON> type() <ASSIGN> expr()
+  <CONST> idt() <COLON> type() <ASSIGN> expr()
 }
 
-void type() : {}
+void type() #Type: {Token t;}
 {
-  (<NUM> | <VOID> | <BOOL> | <INT>)
+  (t=<NUM> | t=<VOID> | t=<BOOL> | t=<INT>) {jjtThis.value = t.image;}
 }
 
 void expr() : {}
@@ -200,7 +201,7 @@ void expr() : {}
 void frag() : {}
 {
   /******* uses kleene star instead of arg_lsit() *******/
-  (<MINUS>)? <ID> (<ROUNDED_O> (arg())* <ROUNDED_C>)?
+  (<MINUS>)? idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)?
   | <NUM>
   | <DIGIT>
   | <TRUE>
@@ -208,26 +209,26 @@ void frag() : {}
   | <ROUNDED_O> expr() <ROUNDED_C>
 }
 
-void bin_op() : {}
+void bin_op() : {Token t;}
 {
-  <PLUS>
-  | <MINUS>
+  t=<PLUS> {jjtThis.value = t.image;} #PlusOp
+  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp
 }
 
-void comp_op() : {}
+void comp_op() : {Token t;}
 {
-  <EQUAL>
-  | <NOT_EQUAL>
-  | <GREATER_THAN>
-  | <GREATER_THAN_EQUAL>
-  | <LESS_THAN>
-  | <LESS_THAN_EQUAL>
+  t=<EQUAL> {jjtThis.value = t.image;} #EqCompOp
+  | t=<NOT_EQUAL> {jjtThis.value = t.image;} #NotEqCompOp
+  | t=<GREATER_THAN> {jjtThis.value = t.image;} #GTCompOp
+  | t=<GREATER_THAN_EQUAL> {jjtThis.value = t.image;} #GTEqCompOp
+  | t=<LESS_THAN> {jjtThis.value = t.image;} #LTCompOp
+  | t=<LESS_THAN_EQUAL> {jjtThis.value = t.image;} #LTEqCompOp
 }
 
 void function() : {}
 {
   /******* uses kleene star instead of param_lsit() *******/
-  type() <ID> <ROUNDED_O> (param())* <ROUNDED_C>
+  type() idt() <ROUNDED_O> (param())* <ROUNDED_C>
   <CURLY_O>
   (decl())*
   (statement())*
@@ -246,9 +247,9 @@ void param() : {}
 void statement() : {}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
-  LOOKAHEAD(<ID> <ASSIGN>)
-  <ID> <ASSIGN> expr() <SEMIC>
-  | <ID> <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
+  LOOKAHEAD(idt() <ASSIGN>)
+  idt() <ASSIGN> expr() <SEMIC>
+  | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | <CURLY_O> (statement())* <CURLY_C>
   | <IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C>
   | <WHILE> condition() <CURLY_O> (statement())* <CURLY_C>
@@ -271,7 +272,7 @@ void condition_prime() : {}
 
 void arg() : {}
 {
-  <ID> arg_prime()
+  idt() arg_prime()
 }
 
 
@@ -279,4 +280,8 @@ void arg_prime() : {}
 {
   /******* fixes conflict/L recur *******/
   [<COMMA> arg()]
+}
+void idt() #ID : {Token t;}
+{
+  t = <ID> {jjtThis.value = t;}
 }
