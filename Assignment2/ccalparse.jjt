@@ -160,7 +160,7 @@ SimpleNode program() #Program: {}
 {
   /******* takes in any amount of  declarations, function definitions and a main *******/
   /******* uses kleene star instead of decl_list() & function_list() *******/
-  (decl())* (function())* main() <EOF> {return jjtThis;}
+  (decl())* (function())* main() <EOF> {return jjtThis;} //added <EOF>
 }
 
 void main() #Main: {}
@@ -170,7 +170,7 @@ void main() #Main: {}
   <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
 }
 
-void decl() : {}
+void decl() #Decl: {}
 {
   (var_decl() | const_decl()) <SEMIC>
 }
@@ -279,6 +279,7 @@ void arg_prime() : {}
   [<COMMA> arg()]
 }
 String idt() #ID : {Token t;}
+//now used in place of all previous instances of <ID>
 {
-  t = <ID> {jjtThis.value = t.image; return t.image;}
+  t = <ID> {jjtThis.value = t.image; return t.image;} //returns the ID as a token
 }

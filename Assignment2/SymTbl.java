@@ -18,6 +18,7 @@ public class SymTbl extends Object {
   }
 
   public void insert(String id, String type, String val, String scope){
+    //methos for adding items into the Symbol Table
     LinkedList<String> itm = ST.get(scope);
 
     if(itm == null){
@@ -32,6 +33,7 @@ public class SymTbl extends Object {
   }
 
   public void printST(){
+    //printing method for Symbol Table
     String scope;
     Enumeration tbl = ST.keys();
 
