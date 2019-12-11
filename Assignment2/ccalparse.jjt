@@ -21,13 +21,10 @@ import java.io.*;
 import java.util.*;
 
 public class ccalparse {
-
-  public static STC ST = new STC();
+  public static SymTbl ST = new SymTbl();
+  public static String scope = "global";  //set scope to global by default
 
   public static void main(String[] args)throws ParseException, FileNotFoundException {
-    String tmp;
-    STC tmp2;
-
     ccalparse parse;
 
     System.out.println("------------------------------------\n");
@@ -44,7 +41,7 @@ public class ccalparse {
     System.out.println("\\_______AST END_______/\n");
 
     System.out.println("\\_______SYMBOL TABLE_______/\n");
-    ST.printTable();
+    ST.printST();
     System.out.println("\\_____SYMBOL TABLE END_____/\n");
 
 
