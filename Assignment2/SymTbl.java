@@ -14,21 +14,21 @@ public class SymTbl extends Object {
     ST = new Hashtable<>();
     types = new Hashtable<>();
     vals = new Hashtable<>();
-    ST.insert("global", new LinkedList<>());
+    ST.put("global", new LinkedList<String>());
   }
 
   public void insert(String id, String type, String val, String scope){
-    LinkedList<String> item = ST.get(scope);
+    LinkedList<String> itm = ST.get(scope);
 
-    if(item == null){
-      item = new LinkedList<>();
-      item.add(id);
-      ST.insert(scope, id);
+    if(itm == null){
+      itm = new LinkedList<>();
+      itm.add(id);
+      ST.put(scope, itm);
     } else {
-      item.addFirst(id);
+      itm.addFirst(id);
     }
-    types.insert(id + scope, type);
-    vals.insert(id + scope, val);
+    types.put(id + scope, type);
+    vals.put(id + scope, val);
   }
 
   public void printST(){
@@ -38,11 +38,11 @@ public class SymTbl extends Object {
     while (tbl.hasMoreElements()){
       scope = (String) tbl.nextElement();
       System.out.println("("+"scope :"+scope+")");
-      LinkedList<String> item = ST.get(scope);
+      LinkedList<String> itm = ST.get(scope);
 
-      for (String id : item){
+      for (String id : itm){
         //for each id in item
-        String type = type.get(id + scope);
+        String type = types.get(id + scope);
         String val = vals.get(id + scope);
         System.out.println("(val: " + val + " id: "+ id + " type: " + type + ")");
       }

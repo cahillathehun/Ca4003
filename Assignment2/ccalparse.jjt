@@ -174,18 +174,18 @@ void decl() : {}
 {
   (var_decl() | const_decl()) <SEMIC>
 }
-void var_decl() #VarDecl: {}
+void var_decl() #VarDecl: {Token t; String id; String type;}
 {
-  <VAR> idt() <COLON> type()
+  t=<VAR> id=idt() <COLON> type=type() {jjtThis.value = t.image; ST.insert(id, type, "var", scope);}
 }
-void const_decl() #ConstDecl: {}
+void const_decl() #ConstDecl: {Token t; String id; String type;}
 {
-  <CONST> idt() <COLON> type() <ASSIGN> expr()
+  t=<CONST> id=idt() <COLON> type=type() <ASSIGN> expr() {jjtThis.value = t.image; ST.insert(id, type, "const", scope);}
 }
 
-void type() #Type: {Token t;}
+String type() #Type: {Token t;}
 {
-  (t=<NUM> | t=<VOID> | t=<BOOL> | t=<INT>) {jjtThis.value = t.image;}
+  (t=<NUM> | t=<VOID> | t=<BOOL> | t=<INT>) {jjtThis.value = t.image; return t.image;}
 }
 
 void expr() : {}
@@ -278,7 +278,7 @@ void arg_prime() : {}
   /******* fixes conflict/L recur *******/
   [<COMMA> arg()]
 }
-void idt() #ID : {Token t;}
+String idt() #ID : {Token t;}
 {
-  t = <ID> {jjtThis.value = t;}
+  t = <ID> {jjtThis.value = t.image; return t.image;}
 }
