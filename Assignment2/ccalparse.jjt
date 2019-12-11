@@ -163,24 +163,26 @@ SimpleNode program() #Program: {}
   (decl())* (function())* main() <EOF> {return jjtThis;} //added <EOF>
 }
 
-void main() #Main: {}
+void main() #Main: {Token t;}
 {
   /******* takes in a main, braces, declarations and statements *******/
   /******* uses kleene star instead of statement_block() *******/
-  <MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C>
+  t=<MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C> {scope="Main";}
 }
 
 void decl() #Decl: {}
 {
   (var_decl() | const_decl()) <SEMIC>
 }
-void var_decl() #VarDecl: {Token t; String id; String type;}
+void var_decl() : {Token t; String id; String type;}
 {
-  t=<VAR> id=idt() <COLON> type=type() {jjtThis.value = t.image; ST.insert(id, type, "var", scope);}
+  //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
+  t=<VAR> id=idt() <COLON> type=type() {jjtThis.value = t.image; ST.insert(id, type, "var", scope);}#VarDecl(2)
 }
-void const_decl() #ConstDecl: {Token t; String id; String type;}
+void const_decl() : {Token t; String id; String type;}
 {
-  t=<CONST> id=idt() <COLON> type=type() <ASSIGN> expr() {jjtThis.value = t.image; ST.insert(id, type, "const", scope);}
+  //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
+  t=<CONST> id=idt() <COLON> type=type() <ASSIGN> expr() {jjtThis.value = t.image; ST.insert(id, type, "const", scope);}#ConstDecl(2)
 }
 
 String type() #Type: {Token t;}
@@ -195,41 +197,46 @@ void expr() : {}
 }
 
 
-void frag() : {}
+void frag() : {Token t;}
 {
   /******* uses kleene star instead of arg_lsit() *******/
-  (<MINUS>)? idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)?
-  | <NUM>
-  | <DIGIT>
-  | <TRUE>
-  | <FALSE>
+  //had to change '(<MINUS>)? idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)?' to current version to be able to check and add minus init to AST
+  idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)? #Function
+  | t=<NUM>         {jjtThis.value = t.image;}#Num
+  | t=<DIGIT>       {jjtThis.value = t.image;}#Digit
+  | t=<TRUE>        {jjtThis.value = t.image;}#TrueBool
+  | t=<FALSE>       {jjtThis.value = t.image;}#FalseBool
+  | t=<MINUS> idt() {jjtThis.value = t.image;}#MinusAssign
   | <ROUNDED_O> expr() <ROUNDED_C>
 }
 
 void bin_op() : {Token t;}
 {
-  t=<PLUS> {jjtThis.value = t.image;} #PlusOp
-  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp
+  t=<PLUS>    {jjtThis.value = t.image;} #PlusOp(2)
+  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp(2)
 }
 
 void comp_op() : {Token t;}
 {
-  t=<EQUAL> {jjtThis.value = t.image;} #EqCompOp
-  | t=<NOT_EQUAL> {jjtThis.value = t.image;} #NotEqCompOp
-  | t=<GREATER_THAN> {jjtThis.value = t.image;} #GTCompOp
-  | t=<GREATER_THAN_EQUAL> {jjtThis.value = t.image;} #GTEqCompOp
-  | t=<LESS_THAN> {jjtThis.value = t.image;} #LTCompOp
-  | t=<LESS_THAN_EQUAL> {jjtThis.value = t.image;} #LTEqCompOp
+  //if there is comparison made, it is added to AST as one of the below
+  t=<EQUAL>                 {jjtThis.value = t.image;} #EqCmpOp
+  | t=<NOT_EQUAL>           {jjtThis.value = t.image;} #NotEqCmpOp
+  | t=<GREATER_THAN>        {jjtThis.value = t.image;} #GTCmpOp
+  | t=<GREATER_THAN_EQUAL>  {jjtThis.value = t.image;} #GTEqCmpOp
+  | t=<LESS_THAN>           {jjtThis.value = t.image;} #LTCmpOp
+  | t=<LESS_THAN_EQUAL>     {jjtThis.value = t.image;} #LTEqCmpOp
 }
 
-void function() : {}
+void function() #Function: {Token t; String type; String id;}
 {
   /******* uses kleene star instead of param_lsit() *******/
-  type() idt() <ROUNDED_O> (param())* <ROUNDED_C>
+  //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
+  type=type() id=idt() <ROUNDED_O> (param())* <ROUNDED_C> {scope = id; ST.insert(id, type, "func", scope);}
   <CURLY_O>
+  /******* uses kleene star instead of decl_lsit() and statement_list() *******/
   (decl())*
   (statement())*
-  <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC>
+  <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC> #Return //#Return put here for the AST
   <CURLY_C>
 }
 
@@ -241,27 +248,26 @@ void param() : {}
   | <ID> <COLON> type()
 }
 
-void statement() : {}
+void statement() : {Token t;}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(idt() <ASSIGN>)
-  idt() <ASSIGN> expr() <SEMIC>
+  idt() t=<ASSIGN> expr() <SEMIC>                   {jjtThis.value = t.image;} #Assignment(2)
   | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
-  | <CURLY_O> (statement())* <CURLY_C>
-  | <IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C>
-  | <WHILE> condition() <CURLY_O> (statement())* <CURLY_C>
-  | <SKIPPY> <SEMIC>
+  | t=<CURLY_O> (statement())* <CURLY_C>                                                            {jjtThis.value = t.image;} #StatementBlock
+  | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement
+  | t=<WHILE> condition() <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement
+  | t=<SKIPPY> <SEMIC>                                                                              {jjtThis.value = t.image;} #Skip
 
 }
 
 void condition() : {}
 {
-  condition_prime() ((<OR> | <AND>) condition_prime())*
+  condition_prime() (LOOKAHEAD(2)(<OR> | <AND>) condition_prime())*
 }
 
 void condition_prime() : {}
 {
-  LOOKAHEAD(<ROUNDED_O> condition())
   <ROUNDED_O> condition() <ROUNDED_C>
   | <NEGATE> condition()
   | expr() comp_op() expr()
@@ -281,5 +287,5 @@ void arg_prime() : {}
 String idt() #ID : {Token t;}
 //now used in place of all previous instances of <ID>
 {
-  t = <ID> {jjtThis.value = t.image; return t.image;} //returns the ID as a token
+  t = <ID>  {jjtThis.value = t.image; return t.image;} //returns the ID as a token
 }

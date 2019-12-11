@@ -14,6 +14,7 @@ public class SymTbl extends Object {
     ST = new Hashtable<>();
     types = new Hashtable<>();
     vals = new Hashtable<>();
+    //sets the default scope to global
     ST.put("global", new LinkedList<String>());
   }
 
