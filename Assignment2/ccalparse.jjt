@@ -160,26 +160,26 @@ SimpleNode program() #Program: {}
 {
   /******* takes in any amount of  declarations, function definitions and a main *******/
   /******* uses kleene star instead of decl_list() & function_list() *******/
-  (decl())* (function())* main() <EOF> {return jjtThis;} //added <EOF>
+  (decl(scope))* (function())* main() <EOF> {return jjtThis;} //added <EOF>
 }
 
 void main() #Main: {Token t;}
 {
   /******* takes in a main, braces, declarations and statements *******/
   /******* uses kleene star instead of statement_block() *******/
-  t=<MAIN> <CURLY_O> (decl())* (statement())* <CURLY_C> {scope="Main";}
+  t=<MAIN> {scope="Main";} <CURLY_O> (decl(scope))* (statement())* <CURLY_C>
 }
 
-void decl() #Decl: {}
+void decl(String scope) #Decl: {}
 {
-  (var_decl() | const_decl()) <SEMIC>
+  (var_decl(scope) | const_decl(scope)) <SEMIC>
 }
-void var_decl() : {Token t; String id; String type;}
+void var_decl(String scope) : {Token t; String id; String type;}
 {
   //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
   t=<VAR> id=idt() <COLON> type=type() {jjtThis.value = t.image; ST.insert(id, type, "var", scope);}#VarDecl(2)
 }
-void const_decl() : {Token t; String id; String type;}
+void const_decl(String scope) : {Token t; String id; String type;}
 {
   //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
   t=<CONST> id=idt() <COLON> type=type() <ASSIGN> expr() {jjtThis.value = t.image; ST.insert(id, type, "const", scope);}#ConstDecl(2)
@@ -206,7 +206,6 @@ void frag() : {Token t;}
   | t=<DIGIT>       {jjtThis.value = t.image;}#Digit
   | t=<TRUE>        {jjtThis.value = t.image;}#TrueBool
   | t=<FALSE>       {jjtThis.value = t.image;}#FalseBool
-  | t=<MINUS> idt() {jjtThis.value = t.image;}#MinusAssign
   | <ROUNDED_O> expr() <ROUNDED_C>
 }
 
@@ -234,31 +233,37 @@ void function() #Function: {Token t; String type; String id;}
   type=type() id=idt() <ROUNDED_O> (param())* <ROUNDED_C> {scope = id; ST.insert(id, type, "func", scope);}
   <CURLY_O>
   /******* uses kleene star instead of decl_lsit() and statement_list() *******/
-  (decl())*
+  (decl(scope))*
   (statement())*
   <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC> #Return //#Return put here for the AST
   <CURLY_C>
 }
 
-void param() : {}
+void param() #Parameter: {}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
-  LOOKAHEAD(<ID> <COLON> type() <COMMA>)
-  <ID> <COLON> type() <COMMA> param()
-  | <ID> <COLON> type()
+  LOOKAHEAD(idt() <COLON> type() <COMMA>)
+  idt() <COLON> type() <COMMA> param()
+  | idt() <COLON> type()
 }
 
 void statement() : {Token t;}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
-  LOOKAHEAD(idt() <ASSIGN>)
-  idt() t=<ASSIGN> expr() <SEMIC>                   {jjtThis.value = t.image;} #Assignment(2)
+
+  LOOKAHEAD(2) idt() t=<ASSIGN> statementPrime(t) //t is passed to statement prime
   | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | t=<CURLY_O> (statement())* <CURLY_C>                                                            {jjtThis.value = t.image;} #StatementBlock
   | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement
   | t=<WHILE> condition() <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement
   | t=<SKIPPY> <SEMIC>                                                                              {jjtThis.value = t.image;} #Skip
+}
 
+void statementPrime(Token t) : {}
+  //statementPrime takes a token t as a parameter
+{
+  <MINUS> expr() <SEMIC>             {jjtThis.value = t.image;} #MinusAssignment(2)
+  | expr() <SEMIC>                   {jjtThis.value = t.image;} #Assignment(2)
 }
 
 void condition() : {}

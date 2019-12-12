@@ -21,5 +21,6 @@ echo comments.ccl
 java ccalparse comments.ccl
 echo scopes
 java ccalparse scopes.ccl
-
+echo functions
+java ccalparse functions.ccl
 echo --- java run ---
