@@ -8,7 +8,7 @@ sleep 1
 
 javac *.java
 echo --- javac run ---
-sleep 2
+
 
 echo
 echo main1.ccl

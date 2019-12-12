@@ -21,7 +21,7 @@ import java.io.*;
 import java.util.*;
 
 public class ccalparse {
-  public static SymTbl ST = new SymTbl();
+  public static SymTbl ST = new SymTbl(); //initialise the Symbol Table
   public static String scope = "global";  //set scope to global by default
 
   public static void main(String[] args)throws ParseException, FileNotFoundException {
@@ -171,6 +171,7 @@ void main() #Main: {Token t;}
 }
 
 void decl(String scope) #Decl: {}
+  //scope must be passed as a param to all declaration functions so that it can be properly manipulated and tracked.
 {
   (var_decl(scope) | const_decl(scope)) <SEMIC>
 }
@@ -230,7 +231,7 @@ void function() #Function: {Token t; String type; String id;}
 {
   /******* uses kleene star instead of param_lsit() *******/
   //have to pass id, type, "var"(val) & scope in this order as thats how the insert method is defined in SymTbl class
-  type=type() id=idt() <ROUNDED_O> (param())* <ROUNDED_C> {scope = id; ST.insert(id, type, "func", scope);}
+  type=type() id=idt() <ROUNDED_O> (param(scope))* <ROUNDED_C> {scope = id; ST.insert(id, type, "func", scope);}
   <CURLY_O>
   /******* uses kleene star instead of decl_lsit() and statement_list() *******/
   (decl(scope))*
@@ -239,12 +240,12 @@ void function() #Function: {Token t; String type; String id;}
   <CURLY_C>
 }
 
-void param() #Parameter: {}
+void param(String scope) : {String type; String id;}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(idt() <COLON> type() <COMMA>)
-  idt() <COLON> type() <COMMA> param()
-  | idt() <COLON> type()
+  id=idt() <COLON> type=type() <COMMA> param(scope)   {ST.insert(id, type, "func", scope);}#Param(3)
+  | id=idt() <COLON> type=type()                      {ST.insert(id, type, "func", scope);}#Param(2)
 }
 
 void statement() : {Token t;}
@@ -255,7 +256,7 @@ void statement() : {Token t;}
   | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | t=<CURLY_O> (statement())* <CURLY_C>                                                            {jjtThis.value = t.image;} #StatementBlock
   | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement
-  | t=<WHILE> condition() <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement
+  | t=<WHILE> <ROUNDED_O> condition() <ROUNDED_C> <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement
   | t=<SKIPPY> <SEMIC>                                                                              {jjtThis.value = t.image;} #Skip
 }
 
@@ -273,6 +274,7 @@ void condition() : {}
 
 void condition_prime() : {}
 {
+  LOOKAHEAD(<ROUNDED_O>)
   <ROUNDED_O> condition() <ROUNDED_C>
   | <NEGATE> condition()
   | expr() comp_op() expr()

@@ -40,14 +40,14 @@ public class SymTbl extends Object {
 
     while (tbl.hasMoreElements()){
       scope = (String) tbl.nextElement();
-      System.out.println("("+"scope :"+scope+")");
+      System.out.println("\n## scope " + scope + " ##");
       LinkedList<String> itm = ST.get(scope);
 
       for (String id : itm){
         //for each id in item
         String type = types.get(id + scope);
         String val = vals.get(id + scope);
-        System.out.println("(val: " + val + " id: "+ id + " type: " + type + ")");
+        System.out.println("|-  VALUE: " + val + " ID: "+ id + " TYPE: " + type);
       }
     }
   }
