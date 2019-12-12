@@ -5,7 +5,7 @@ integer multiply (x:integer , y:integer)
 
   // figure out sign of result and convert args to absolute values
 
-  if (x < 0 && y >= 0)
+  if x < 0 && y >= 0
   {
     minus_sign = true;
     x = -x;

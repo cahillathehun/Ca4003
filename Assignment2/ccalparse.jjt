@@ -191,23 +191,28 @@ String type() #Type: {Token t;}
   (t=<NUM> | t=<VOID> | t=<BOOL> | t=<INT>) {jjtThis.value = t.image; return t.image;}
 }
 
-void expr() : {}
-{
-  /******* uses kleene star instead of frag_list() *******/
-  frag() (bin_op() frag())*
+
+
+void expr() : {} {
+    frag() exprPR()
+    | <ROUNDED_O> expr() <ROUNDED_C> exprPR()
 }
 
+void exprPR() : {} {
+    bin_op() expr()
+    | {}
+}
 
 void frag() : {Token t;}
 {
   /******* uses kleene star instead of arg_lsit() *******/
   //had to change '(<MINUS>)? idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)?' to current version to be able to check and add minus init to AST
-  idt() (<ROUNDED_O> (arg())* <ROUNDED_C>)? #Function
-  | t=<NUM>         {jjtThis.value = t.image;}#Num
+
+  t=<NUM>         {jjtThis.value = t.image;}#Num
   | t=<DIGIT>       {jjtThis.value = t.image;}#Digit
   | t=<TRUE>        {jjtThis.value = t.image;}#TrueBool
   | t=<FALSE>       {jjtThis.value = t.image;}#FalseBool
-  | <ROUNDED_O> expr() <ROUNDED_C>
+  | idt() (<ROUNDED_O> (arg())* <ROUNDED_C> | {}) #FunctionCall
 }
 
 void bin_op() : {Token t;}
@@ -219,12 +224,12 @@ void bin_op() : {Token t;}
 void comp_op() : {Token t;}
 {
   //if there is comparison made, it is added to AST as one of the below
-  t=<EQUAL>                 {jjtThis.value = t.image;} #EqCmpOp
-  | t=<NOT_EQUAL>           {jjtThis.value = t.image;} #NotEqCmpOp
-  | t=<GREATER_THAN>        {jjtThis.value = t.image;} #GTCmpOp
-  | t=<GREATER_THAN_EQUAL>  {jjtThis.value = t.image;} #GTEqCmpOp
-  | t=<LESS_THAN>           {jjtThis.value = t.image;} #LTCmpOp
-  | t=<LESS_THAN_EQUAL>     {jjtThis.value = t.image;} #LTEqCmpOp
+  t=<EQUAL>                 {jjtThis.value = t.image;} #EqCmpOp(2)
+  | t=<NOT_EQUAL>           {jjtThis.value = t.image;} #NotEqCmpOp(2)
+  | t=<GREATER_THAN>        {jjtThis.value = t.image;} #GTCmpOp(2)
+  | t=<GREATER_THAN_EQUAL>  {jjtThis.value = t.image;} #GTEqCmpOp(2)
+  | t=<LESS_THAN>           {jjtThis.value = t.image;} #LTCmpOp(2)
+  | t=<LESS_THAN_EQUAL>     {jjtThis.value = t.image;} #LTEqCmpOp(2)
 }
 
 void function() #Function: {Token t; String type; String id;}
@@ -236,8 +241,13 @@ void function() #Function: {Token t; String type; String id;}
   /******* uses kleene star instead of decl_lsit() and statement_list() *******/
   (decl(scope))*
   (statement())*
-  <RETURN> <ROUNDED_O> [expr()] <ROUNDED_C> <SEMIC> #Return //#Return put here for the AST
+  rtn() //#Return put here for the AST
   <CURLY_C>
+}
+
+void rtn() : {}
+{
+  <RETURN> <ROUNDED_O> (idt() | <NUM> | <DIGIT> | <FALSE> | <BOOL>)* <ROUNDED_C> <SEMIC>  #Return(1)
 }
 
 void param(String scope) : {String type; String id;}
@@ -255,29 +265,31 @@ void statement() : {Token t;}
   LOOKAHEAD(2) idt() t=<ASSIGN> statementPrime(t) //t is passed to statement prime
   | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | t=<CURLY_O> (statement())* <CURLY_C>                                                            {jjtThis.value = t.image;} #StatementBlock
-  | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement
-  | t=<WHILE> <ROUNDED_O> condition() <ROUNDED_C> <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement
+  | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement(3)
+  | t=<WHILE> <ROUNDED_O> condition() <ROUNDED_C> <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement(2)
   | t=<SKIPPY> <SEMIC>                                                                              {jjtThis.value = t.image;} #Skip
 }
 
 void statementPrime(Token t) : {}
   //statementPrime takes a token t as a parameter
 {
-  <MINUS> expr() <SEMIC>             {jjtThis.value = t.image;} #MinusAssignment(2)
-  | expr() <SEMIC>                   {jjtThis.value = t.image;} #Assignment(2)
+  <MINUS> expr() <SEMIC>                    {jjtThis.value = t.image;} #MinusAssignment(2)
+  | expr() <SEMIC>                          {jjtThis.value = t.image;} #Assignment(2)
 }
+
+
 
 void condition() : {}
 {
-  condition_prime() (LOOKAHEAD(2)(<OR> | <AND>) condition_prime())*
+    <NEGATE> condition() conditionPR()
+    | <ROUNDED_O> condition() <ROUNDED_C> conditionPR()
+    | frag() exprPR() comp_op() expr() conditionPR()
+
 }
 
-void condition_prime() : {}
-{
-  LOOKAHEAD(<ROUNDED_O>)
-  <ROUNDED_O> condition() <ROUNDED_C>
-  | <NEGATE> condition()
-  | expr() comp_op() expr()
+void conditionPR() : {} {
+    ( <OR> | <AND> )  condition() conditionPR()
+    | {}
 }
 
 void arg() : {}

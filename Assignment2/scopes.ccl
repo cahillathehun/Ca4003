@@ -12,9 +12,13 @@ main
 {
   var i:integer;
   i = 1;
-  if i > 0
+  if i < 0
   {
-    i = 2;
+    i=2;
+  }
+  else
+  {
+    i=1;
   }
   i = test_fn(i);
 }
