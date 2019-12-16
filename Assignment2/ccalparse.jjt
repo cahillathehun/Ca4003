@@ -9,6 +9,7 @@ options
   NODE_DEFAULT_VOID = true;
   MULTI=true;
   VISITOR = true;
+  NODE_PREFIX = "";
 }
 
 /***********************
@@ -35,14 +36,19 @@ public class ccalparse {
 
     SimpleNode root = parse.program();
 
-    System.out.println("\\_________AST_________/\n");
+    System.out.println("\\__________AST______________/\n");
     root.dump("");
     System.out.println("");
-    System.out.println("\\_______AST END_______/\n");
+    System.out.println("\\________AST END____________/\n");
 
-    System.out.println("\\_______SYMBOL TABLE_______/\n");
+    System.out.println("\\_______SYMBOL TABLE________/\n");
     ST.printST();
-    System.out.println("\\_____SYMBOL TABLE END_____/\n");
+    System.out.println("\\_____SYMBOL TABLE END______/\n");
+
+    System.out.println("\\_____SEMANTIC ANALYSIS_____/\n");
+    semanticCheckVisitor scv = new semanticCheckVisitor();
+    root.jjtAccept(scv, ST);
+    System.out.println("\\___SEMANTIC ANALYSIS END___/\n");
 
 
   }
@@ -217,19 +223,19 @@ void frag() : {Token t;}
 
 void bin_op() : {Token t;}
 {
-  t=<PLUS>    {jjtThis.value = t.image;} #PlusOp(2)
-  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp(2)
+  t=<PLUS>    {jjtThis.value = t.image;} #PlusOp
+  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp
 }
 
-void comp_op() : {Token t;}
+void comp_op() #Compare: {Token t;}
 {
   //if there is comparison made, it is added to AST as one of the below
-  t=<EQUAL>                 {jjtThis.value = t.image;} #EqCmpOp(2)
-  | t=<NOT_EQUAL>           {jjtThis.value = t.image;} #NotEqCmpOp(2)
-  | t=<GREATER_THAN>        {jjtThis.value = t.image;} #GTCmpOp(2)
-  | t=<GREATER_THAN_EQUAL>  {jjtThis.value = t.image;} #GTEqCmpOp(2)
-  | t=<LESS_THAN>           {jjtThis.value = t.image;} #LTCmpOp(2)
-  | t=<LESS_THAN_EQUAL>     {jjtThis.value = t.image;} #LTEqCmpOp(2)
+  t=<EQUAL>                 {jjtThis.value = t.image;} #EqCmpOp
+  | t=<NOT_EQUAL>           {jjtThis.value = t.image;} #NotEqCmpOp
+  | t=<GREATER_THAN>        {jjtThis.value = t.image;} #GTCmpOp
+  | t=<GREATER_THAN_EQUAL>  {jjtThis.value = t.image;} #GTEqCmpOp
+  | t=<LESS_THAN>           {jjtThis.value = t.image;} #LTCmpOp
+  | t=<LESS_THAN_EQUAL>     {jjtThis.value = t.image;} #LTEqCmpOp
 }
 
 void function() #Function: {Token t; String type; String id;}
@@ -254,8 +260,8 @@ void param(String scope) : {String type; String id;}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(idt() <COLON> type() <COMMA>)
-  id=idt() <COLON> type=type() <COMMA> param(scope)   {ST.insert(id, type, "func", scope);}#Param(3)
-  | id=idt() <COLON> type=type()                      {ST.insert(id, type, "func", scope);}#Param(2)
+  id=idt() <COLON> type=type() <COMMA> param(scope)   {ST.insert(id, type, "func", scope);}#Param
+  | id=idt() <COLON> type=type()                      {ST.insert(id, type, "func", scope);}#Param
 }
 
 void statement() : {Token t;}
@@ -273,8 +279,8 @@ void statement() : {Token t;}
 void statementPrime(Token t) : {}
   //statementPrime takes a token t as a parameter
 {
-  <MINUS> expr() <SEMIC>                    {jjtThis.value = t.image;} #MinusAssignment(2)
-  | expr() <SEMIC>                          {jjtThis.value = t.image;} #Assignment(2)
+  <MINUS> expr() <SEMIC>                    {jjtThis.value = t.image;} #MinusAssignment
+  | expr() <SEMIC>                          {jjtThis.value = t.image;} #Assignment
 }
 
 
