@@ -37,11 +37,11 @@ public class ccalparse {
     SimpleNode root = parse.program();
 
     System.out.println("\\__________AST______________/\n");
-    root.dump("");
+    root.dump("|");
     System.out.println("");
     System.out.println("\\________AST END____________/\n");
 
-    System.out.println("\\_______SYMBOL TABLE________/\n");
+    System.out.println("/_______SYMBOL TABLE________\\\n");
     ST.printST();
     System.out.println("\\_____SYMBOL TABLE END______/\n");
 
@@ -223,8 +223,8 @@ void frag() : {Token t;}
 
 void bin_op() : {Token t;}
 {
-  t=<PLUS>    {jjtThis.value = t.image;} #PlusOp
-  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp
+  t=<PLUS>    {jjtThis.value = t.image;} #PlusOp(2)
+  | t=<MINUS> {jjtThis.value = t.image;} #MinusOp(2)
 }
 
 void comp_op() #Compare: {Token t;}
@@ -260,8 +260,8 @@ void param(String scope) : {String type; String id;}
 {
   /******* uses lookahead to choose between prod rules to eliminate choice conflict *******/
   LOOKAHEAD(idt() <COLON> type() <COMMA>)
-  id=idt() <COLON> type=type() <COMMA> param(scope)   {ST.insert(id, type, "func", scope);}#Param
-  | id=idt() <COLON> type=type()                      {ST.insert(id, type, "func", scope);}#Param
+  id=idt() <COLON> type=type() <COMMA> param(scope)   {ST.insert(id, type, "func", scope);}#Param(3)
+  | id=idt() <COLON> type=type()                      {ST.insert(id, type, "func", scope);}#Param(2)
 }
 
 void statement() : {Token t;}
@@ -271,7 +271,7 @@ void statement() : {Token t;}
   LOOKAHEAD(2) idt() t=<ASSIGN> statementPrime(t) //t is passed to statement prime
   | idt() <ROUNDED_O> (arg())* <ROUNDED_C> <SEMIC>
   | t=<CURLY_O> (statement())* <CURLY_C>                                                            {jjtThis.value = t.image;} #StatementBlock
-  | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement(3)
+  | t=<IF> condition() <CURLY_O> (statement())* <CURLY_C> <ELSE> <CURLY_O> (statement())* <CURLY_C> {jjtThis.value = t.image;} #IfElseStatement(4)
   | t=<WHILE> <ROUNDED_O> condition() <ROUNDED_C> <CURLY_O> (statement())* <CURLY_C>                                        {jjtThis.value = t.image;} #WhileStatement(2)
   | t=<SKIPPY> <SEMIC>                                                                              {jjtThis.value = t.image;} #Skip
 }
@@ -279,8 +279,8 @@ void statement() : {Token t;}
 void statementPrime(Token t) : {}
   //statementPrime takes a token t as a parameter
 {
-  <MINUS> expr() <SEMIC>                    {jjtThis.value = t.image;} #MinusAssignment
-  | expr() <SEMIC>                          {jjtThis.value = t.image;} #Assignment
+  <MINUS> expr() <SEMIC>                    {jjtThis.value = t.image;} #MinusAssignment(2)
+  | expr() <SEMIC>                          {jjtThis.value = t.image;} #Assignment(2)
 }
 
 
